@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lecture 10: Database Security (Oracle) - 視覺化精要筆記</title>
+  <style>
+    :root {
+      --bg-main: #f8fafc;
+      --bg-card: #ffffff;
+      --bg-subtle: #f1f5f9;
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #64748b;
+      --border-color: #e2e8f0;
+      
+      /* 三大支柱主題色 (柔和淺色系搭配深色文字) */
+      --assess-bg: #eff6ff;
+      --assess-border: #bfdbfe;
+      --assess-accent: #2563eb;
+      
+      --prevent-bg: #f0fdf4;
+      --prevent-border: #bbf7d0;
+      --prevent-accent: #16a34a;
+      
+      --detect-bg: #fffbeb;
+      --detect-border: #fde68a;
+      --detect-accent: #d97706;
+
+      --danger-bg: #fef2f2;
+      --danger-border: #fecaca;
+      --danger-text: #dc2626;
+
+      --radius-lg: 16px;
+      --radius-md: 10px;
+      --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06);
+      --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.05);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang HK", "Microsoft JhengHei", sans-serif;
+      background-color: var(--bg-main);
+      color: var(--text-primary);
+      line-height: 1.6;
+      padding: 32px 20px 64px;
+    }
+
+    .container {
+      max-width: 1140px;
+      margin: 0 auto;
+    }
+
+    /* 頂部標題區 */
+    header {
+      background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 28px 32px;
+      margin-bottom: 28px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .header-title h1 {
+      font-size: 1.75rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+    }
+
+    .header-title p {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      margin-top: 6px;
+    }
+
+    .badge-center {
+      background: #eef2ff;
+      color: #4f46e5;
+      border: 1px solid #c7d2fe;
+      padding: 8px 16px;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 0.875rem;
+    }
+
+    /* 導航欄 */
+    .nav-tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+    }
+
+    .nav-btn {
+      padding: 10px 18px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-color);
+      background: var(--bg-card);
+      color: var(--text-secondary);
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .nav-btn:hover {
+      background: var(--bg-subtle);
+      color: var(--text-primary);
+    }
+
+    .nav-btn.active {
+      background: var(--text-primary);
+      color: #ffffff;
+      border-color: var(--text-primary);
+    }
+
+    /* 卡片與通用佈局 */
+    .section-block {
+      margin-bottom: 36px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .pillar-tag {
+      padding: 4px 12px;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .tag-overview { background: #e0e7ff; color: #3730a3; }
+    .tag-assess { background: var(--assess-bg); color: var(--assess-accent); border: 1px solid var(--assess-border); }
+    .tag-prevent { background: var(--prevent-bg); color: var(--prevent-accent); border: 1px solid var(--prevent-border); }
+    .tag-detect { background: var(--detect-bg); color: var(--detect-accent); border: 1px solid var(--detect-border); }
+
+    .section-header h2 {
+      font-size: 1.35rem;
+      font-weight: 700;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+      gap: 20px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+      gap: 20px;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      box-shadow: var(--shadow-md);
+    }
+
+    .card h3 {
+      font-size: 1.1rem;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .slide-ref {
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      background: var(--bg-subtle);
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+
+    /* 三大支柱總覽卡片 */
+    .pillar-card {
+      border-top-width: 5px;
+      position: relative;
+    }
+    .pillar-assess { border-top-color: var(--assess-accent); }
+    .pillar-prevent { border-top-color: var(--prevent-accent); }
+    .pillar-detect { border-top-color: var(--detect-accent); }
+
+    .chip-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .chip {
+      font-size: 0.8rem;
+      padding: 4px 10px;
+      border-radius: 6px;
+      background: var(--bg-subtle);
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    /* 閉環流程條 */
+    .loop-banner {
+      margin-top: 16px;
+      background: #f8fafc;
+      border: 1px dashed #cbd5e1;
+      border-radius: var(--radius-md);
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+
+    .loop-step {
+      font-weight: 600;
+      color: var(--text-primary);
+      background: #fff;
+      padding: 6px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+    }
+
+    /* 表格樣式 */
+    .table-wrap {
+      overflow-x: auto;
+      margin-top: 12px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    th {
+      background: var(--bg-subtle);
+      color: var(--text-secondary);
+      font-weight: 600;
+      font-size: 0.82rem;
+      text-transform: uppercase;
+    }
+
+    tr:hover td {
+      background-color: #f8fafc;
+    }
+
+    .code-pill {
+      font-family: "SFMono-Regular", Consolas, monospace;
+      background: #f1f5f9;
+      color: #0f172a;
+      padding: 3px 8px;
+      border-radius: 5px;
+      font-weight: 600;
+      font-size: 0.82rem;
+      border: 1px solid #e2e8f0;
+    }
+
+    /* 警告框與重點框 */
+    .alert-box {
+      background: var(--danger-bg);
+      border: 1px solid var(--danger-border);
+      border-left: 4px solid var(--danger-text);
+      padding: 14px 16px;
+      border-radius: var(--radius-md);
+      margin-top: 12px;
+      font-size: 0.88rem;
+    }
+
+    .alert-box strong {
+      color: var(--danger-text);
+    }
+
+    .info-box {
+      background: var(--assess-bg);
+      border: 1px solid var(--assess-border);
+      border-left: 4px solid var(--assess-accent);
+      padding: 14px 16px;
+      border-radius: var(--radius-md);
+      margin-top: 12px;
+      font-size: 0.88rem;
+    }
+
+    /* SQL 代碼塊 */
+    .sql-block {
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-left: 4px solid var(--detect-accent);
+      border-radius: 8px;
+      padding: 14px 16px;
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 0.85rem;
+      color: #1e293b;
+      margin: 10px 0;
+      overflow-x: auto;
+    }
+
+    .sql-comment {
+      color: #64748b;
+      font-style: italic;
+    }
+
+    /* 視覺流程小組件 */
+    .flow-diagram {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: var(--bg-subtle);
+      padding: 16px;
+      border-radius: var(--radius-md);
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+
+    .flow-node {
+      background: #fff;
+      border: 1px solid var(--border-color);
+      padding: 10px 14px;
+      border-radius: 8px;
+      text-align: center;
+      flex: 1;
+      min-width: 120px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .flow-node .title {
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: var(--text-primary);
+    }
+
+    .flow-node .sub {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .flow-arrow {
+      font-weight: bold;
+      color: var(--text-muted);
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      font-size: 0.9rem;
+      margin-bottom: 12px;
+      outline: none;
+    }
+
+    .search-input:focus {
+      border-color: var(--assess-accent);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    ul.clean-list {
+      list-style: none;
+      margin-top: 8px;
+    }
+
+    ul.clean-list li {
+      position: relative;
+      padding-left: 18px;
+      margin-bottom: 8px;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+
+    ul.clean-list li::before {
+      content: "•";
+      position: absolute;
+      left: 4px;
+      color: var(--assess-accent);
+      font-weight: bold;
+    }
+
+    @media (max-width: 768px) {
+      .grid-2, .grid-3 {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header>
+      <div class="header-title">
+        <h1>🛡️ Lecture #10: Database Security (Oracle)</h1>
+        <p>告別混亂排版！按「三大安全支柱 (Assess → Prevent → Detect)」重構的一站式視覺化筆記</p>
+      </div>
+      <div class="badge-center">核心中樞：Oracle Data Safe (Unified Control Center)</div>
+    </header>
+
+    <!-- 篩選導航 -->
+    <div class="nav-tabs">
+      <button class="nav-btn active" onclick="filterSection('all', this)">全部展開 (All Slides 1-28)</button>
+      <button class="nav-btn" onclick="filterSection('overview', this)">0. 頂層架構 (Pages 1-3)</button>
+      <button class="nav-btn" onclick="filterSection('assess', this)">1. Assess 評估 (Pages 4-11)</button>
+      <button class="nav-btn" onclick="filterSection('prevent', this)">2. Prevent 防禦 (Pages 12-23)</button>
+      <button class="nav-btn" onclick="filterSection('detect', this)">3. Detect 檢測與審計 (Pages 24-28)</button>
+    </div>
+
+    <!-- SECTION 0: OVERVIEW -->
+    <div class="section-block" data-section="overview">
+      <div class="section-header">
+        <span class="pillar-tag tag-overview">Overview</span>
+        <h2>頂層架構：Oracle Data Safe 與三大安全支柱 (Pages 1–3)</h2>
+      </div>
+
+      <div class="grid-3">
+        <div class="card pillar-card pillar-assess">
+          <h3><span>🔍 1. ASSESS (評估)</span><span class="slide-ref">Page 3</span></h3>
+          <p style="font-size:0.9rem; color:var(--text-secondary);">識別個人數據面臨的風險，並制定清晰的行動方案 (Course of action)。</p>
+          <div class="chip-list">
+            <span class="chip">Processes</span>
+            <span class="chip">Profiles</span>
+            <span class="chip">Data Sensitivity</span>
+            <span class="chip">Risks</span>
+          </div>
+        </div>
+
+        <div class="card pillar-card pillar-prevent">
+          <h3><span>🛡️ 2. PREVENT (防禦)</span><span class="slide-ref">Page 3</span></h3>
+          <p style="font-size:0.9rem; color:var(--text-secondary);">採取技術、控制與緩解措施來保護個人敏感數據。</p>
+          <div class="chip-list">
+            <span class="chip">Encryption (加密)</span>
+            <span class="chip">Pseudonymisation (假名化)</span>
+            <span class="chip">Anonymisation (匿名化)</span>
+            <span class="chip">FGAC (細粒度控制)</span>
+            <span class="chip">Privileged Access Control</span>
+            <span class="chip">Separation of Duties (職責分離)</span>
+          </div>
+        </div>
+
+        <div class="card pillar-card pillar-detect">
+          <h3><span>📡 3. DETECT (檢測)</span><span class="slide-ref">Page 3</span></h3>
+          <p style="font-size:0.9rem; color:var(--text-secondary);">落實報告與審計要求，確保未授權訪問被記錄並通報。</p>
+          <div class="chip-list">
+            <span class="chip">Auditing (審計)</span>
+            <span class="chip">Activity Monitoring</span>
+            <span class="chip">Alerting (告警)</span>
+            <span class="chip">Reporting (報告)</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="loop-banner">
+        <span class="loop-step">Assess + Prevent</span>
+        <span>➔ 產出 <strong>Risk Analysis / Mitigation Proposal (風險分析提案)</strong></span>
+        <span>|</span>
+        <span class="loop-step">Detect (Security Alerts)</span>
+        <span>➔ 觸發 <strong>Remediation Actions (反哺回 Prevent 修改配置/加固)</strong></span>
+      </div>
+    </div>
+
+    <!-- SECTION 1: ASSESS -->
+    <div class="section-block" data-section="assess">
+      <div class="section-header">
+        <span class="pillar-tag tag-assess">Pillar 1: Assess</span>
+        <h2>安全評估、DBSAT 工具與權限分析 (Pages 4–11)</h2>
+      </div>
+
+      <div class="info-box" style="margin-bottom: 20px;">
+        <strong>💡 幫你理清 Pages 4–11 的「套娃」關係：</strong><br/>
+        Page 4 提出了評估的 <strong>3 大任務</strong>，而 Pages 5–11 其實就是用 <strong>DBSAT（獨立命令行工具）</strong> 和 <strong>Privilege Analysis</strong> 把這 3 大任務逐一展開！
+      </div>
+
+      <div class="grid-3" style="margin-bottom: 20px;">
+        <!-- 任務 1 -->
+        <div class="card">
+          <h3><span>任務 ①：Discover Personal Data</span><span class="slide-ref">Pages 4, 7–8</span></h3>
+          <p style="font-size:0.88rem; color:var(--text-secondary);">找出哪些 Table 和 Column 包含敏感/個人數據。</p>
+          <ul class="clean-list">
+            <li><strong>125+ Predefined Sensitive Types</strong>：涵蓋 Identification, Biographic, IT, Financial, Healthcare, Employment, Academic 7 大類。</li>
+            <li><strong>Search Patterns (正則表達式 Regex)</strong> 同時掃描 3 處：
+              <br/>① <code>Column Name</code> (列名)
+              <br/>② <code>Column Comment</code> (列註釋)
+              <br/>③ <code>Column Data</code> (實際數據內容)
+            </li>
+            <li><strong>產出報告</strong>：DBSAT Sensitive Data Assessment Report（統計敏感表/列/行數、標註 <strong>High/Low Risk Level</strong> 並給出保護建議）。</li>
+          </ul>
+        </div>
+
+        <!-- 任務 2 -->
+        <div class="card">
+          <h3><span>任務 ②：Scan Security Config</span><span class="slide-ref">Pages 4, 9–10</span></h3>
+          <p style="font-size:0.88rem; color:var(--text-secondary);">評估數據庫版本補丁、加密、審計與高危賬戶配置。</p>
+          <div class="alert-box">
+            <strong>⚠️ 典型警告 1：USER.DEFPWD (Severe Risk)</strong><br/>
+            發現未鎖定賬戶使用默認密碼（如 <code>SCOTT</code>, <code>SYSTEM</code>）。<br/>
+            <em>必考避坑</em>：<strong>連已經 Locked（鎖定）的賬戶也必須修改默認密碼！</strong>防止日後解鎖瞬間成為後門。
+          </div>
+          <div class="alert-box" style="background:#fffbeb; border-color:#fde68a; border-left-color:#d97706; margin-top:10px;">
+            <strong style="color:#b45309;">⚠️ 典型警告 2：PRIV.DBA (Evaluate)</strong><br/>
+            <code>DBA</code> 角色權限過大，應遵循 <strong>Least Privilege (最小權限)</strong> 與 <strong>SoD (職責分離)</strong>，使用獨立實名賬號，避免授予 <code>WITH ADMIN OPTION</code>。
+          </div>
+        </div>
+
+        <!-- 任務 3 -->
+        <div class="card">
+          <h3><span>任務 ③：Role & Privilege Analysis</span><span class="slide-ref">Pages 4, 11</span></h3>
+          <p style="font-size:0.88rem; color:var(--text-secondary);">搞清 Controllers, Processors, Third parties, Data subjects, Recipients 如何訪問數據，並清理多餘權限。</p>
+          <div class="flow-diagram" style="flex-direction: column; align-items: stretch;">
+            <div class="flow-node">
+              <div class="title">1. Runtime Capture (運行時捕獲)</div>
+              <div class="sub">記錄用戶 (如 DBA_DEBRA) 與 App 實際使用的權限</div>
+            </div>
+            <div style="text-align:center; color:var(--text-muted);">⬇</div>
+            <div class="flow-node">
+              <div class="title">2. Unused / Used Reports</div>
+              <div class="sub">對比找出長期閒置未用的權限 (Unused privileges)</div>
+            </div>
+            <div style="text-align:center; color:var(--text-muted);">⬇</div>
+            <div class="flow-node" style="border-color:var(--assess-accent); background:var(--assess-bg);">
+              <div class="title" style="color:var(--assess-accent);">3. Revoke Unnecessary Privileges</div>
+              <div class="sub">精準收回多餘權限，不影響現有業務運行</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DBSAT 規則速查表 -->
+      <div class="card">
+        <h3>
+          <span>🛠️ DBSAT (Database Security Assessment Tool) 8 大檢查維度與規則速查表</span>
+          <span class="slide-ref">Pages 5–6 (常考匹配題)</span>
+        </h3>
+        <p style="font-size:0.88rem; color:var(--text-secondary); margin-bottom:12px;">
+          定位：<strong>Stand-alone command line tool (獨立命令行工具)</strong>。注意它不僅查 DB 內部，還查<strong>網絡層 (Listener)</strong> 與 <strong>操作系統層 (OS File permissions)</strong>！
+        </p>
+        <input type="text" id="ruleSearch" class="search-input" placeholder="🔍 輸入關鍵詞過濾規則（例如：DBA, OS, TDE, REDACT, 30 days...）" onkeyup="filterRules()" />
+        <div class="table-wrap">
+          <table id="dbsatTable">
+            <thead>
+              <tr>
+                <th>歸屬維度</th>
+                <th>Rule 規則代碼</th>
+                <th>檢查內容摘要 (Summary)</th>
+                <th>速記提示</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>賬戶與角色</td>
+                <td><span class="code-pill">USER.EXPIRED</span></td>
+                <td>過去 30 天未改密碼的用戶（排查幽靈賬戶 Ghost accounts?）</td>
+                <td><code>USER</code> = 賬戶狀態</td>
+              </tr>
+              <tr>
+                <td>權限控制</td>
+                <td><span class="code-pill">PRIV.DATA</span></td>
+                <td>哪些用戶可以在所有 Schema 中執行 create/update/insert/delete？</td>
+                <td><code>PRIV</code> = 數據增刪改權限</td>
+              </tr>
+              <tr>
+                <td>特權角色</td>
+                <td><span class="code-pill">PRIV.DBA</span></td>
+                <td>誰擁有最高權限的 <code>DBA</code> 角色？</td>
+                <td>排查超級管理員濫用</td>
+              </tr>
+              <tr>
+                <td>授權控制</td>
+                <td><span class="code-pill">AUTH.DV</span></td>
+                <td>是否部署了防內鬼 (insider threats)、憑證被盜與人為失誤的控制？</td>
+                <td><code>DV</code> = Database Vault</td>
+              </tr>
+              <tr>
+                <td>數據加密</td>
+                <td><span class="code-pill">CRYPT.TDE</span></td>
+                <td>敏感/受監管數據是否已加密？</td>
+                <td><code>TDE</code> = 透明數據加密</td>
+              </tr>
+              <tr>
+                <td>細粒度訪問</td>
+                <td><span class="code-pill">ACCESS.REDACT</span></td>
+                <td>Data Redaction（動態數據編校/脫敏）策略詳情</td>
+                <td><code>REDACT</code> = 動態打碼</td>
+              </tr>
+              <tr>
+                <td>審計策略</td>
+                <td><span class="code-pill">AUDIT.UNIFIED</span></td>
+                <td>統一審計策略詳情 (Audit policies detail)</td>
+                <td><code>AUDIT</code> = 審計</td>
+              </tr>
+              <tr>
+                <td>OS 文件權限</td>
+                <td><span class="code-pill">CONF.FILESYS</span></td>
+                <td>哪些數據庫服務器 OS 目錄可通過 <code>PL/SQL</code> 訪問？</td>
+                <td>防 SQL 穿透讀寫底層 OS 文件</td>
+              </tr>
+              <tr>
+                <td>網絡監聽配置</td>
+                <td><span class="code-pill">NET.CRYPT</span></td>
+                <td>網絡傳輸流量是否加密？(Are we encrypting network traffic?)</td>
+                <td><code>NET</code> = 網絡傳輸加密</td>
+              </tr>
+              <tr>
+                <td>OS 進程代理</td>
+                <td><span class="code-pill">OS.AGENT</span></td>
+                <td>數據庫服務器上運行著多少個代理程序 (Agents)？</td>
+                <td><code>OS</code> = 操作系統級進程</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 2: PREVENT -->
+    <div class="section-block" data-section="prevent">
+      <div class="section-header">
+        <span class="pillar-tag tag-prevent">Pillar 2: Prevent</span>
+        <h2>數據脫敏 (Masking vs. Redaction) 與細粒度訪問控制 (VPD) (Pages 12–23)</h2>
+      </div>
+
+      <!-- 核心對比表：Masking vs Redaction -->
+      <div class="card" style="margin-bottom: 20px;">
+        <h3>
+          <span>⚖️ 必考核心對比：Data Masking (靜態脫敏) vs. Oracle Data Redaction (動態編校)</span>
+          <span class="slide-ref">Pages 13–19</span>
+        </h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:18%;">對比維度</th>
+                <th style="width:41%; background:#f0fdf4; color:#166534;">1. Data Masking (靜態數據脫敏 - Pages 13–14)</th>
+                <th style="width:41%; background:#eff6ff; color:#1e40af;">2. Oracle Data Redaction (動態數據編校 - Pages 15–19)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>本質機制</strong></td>
+                <td><strong>Static Masking (靜態脫敏)</strong></td>
+                <td><strong>Dynamic Masking (動態脫敏，On-the-fly 實時處理)</strong></td>
+              </tr>
+              <tr>
+                <td><strong>是否改變底層存儲數據？</strong></td>
+                <td><strong style="color:var(--danger-text);">YES！Permanently altering data (永久改變數據)</strong>，脫敏後不可逆。</td>
+                <td><strong style="color:var(--prevent-accent);">NO！Does NOT change stored data value</strong>，只改變返回給應用程序的 SQL 查詢結果顯示。</td>
+              </tr>
+              <tr>
+                <td><strong>適用環境</strong></td>
+                <td><strong>Non-production (非生產環境)</strong>：如開發 (DEV)、測試 (TEST)、分析、外包給第三方廠商。</td>
+                <td><strong>Production (生產環境)</strong>：如呼叫中心 (Call Center) 屏幕向客服人員展示客戶資料。</td>
+              </tr>
+              <tr>
+                <td><strong>防範對象</strong></td>
+                <td>黑客，以及開發人員、測試人員、IT 管理員、外包人員。</td>
+                <td>終端應用用戶 (Application End Users，限制敏感數據暴露)。</td>
+              </tr>
+              <tr>
+                <td><strong>核心算法 / 轉換策略</strong></td>
+                <td>
+                  <strong>5 種脫敏算法 (Page 14)：</strong><br/>
+                  • <code>Fictitious Data</code>：末尾打井號 <code>613-30-####</code><br/>
+                  • <code>Random Data</code>：替換為隨機姓名 (Jim Arthur)<br/>
+                  • <code>Date Aging</code>：日期統一偏移 (減 4 年 2 個月)<br/>
+                  • <code>Numeric Alteration</code>：數值增減 (+200)<br/>
+                  • <code>Shuffling Data</code>：同列數據洗牌互換
+                </td>
+                <td>
+                  <strong>4 種編校策略 (Pages 17–18)：</strong><br/>
+                  • <code>Full redaction</code>：字符變單空格 <code>' '</code>、數字變 <code>0</code>、日期變 <code>01-JAN-01</code><br/>
+                  • <code>Partial redaction</code>：部分打星號，如 <code>XXX-XX-4328</code><br/>
+                  • <code>Regular expressions</code>：正則匹配格式（如脫敏 Email）<br/>
+                  • <code>Random redaction</code>：每次查詢返回隨機生成的值
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="info-box" style="margin-top: 16px;">
+          <strong>🔐 Page 19 重點：Combining TDE with Data Redaction（雙劍合璧）</strong><br/>
+          • <strong>Data Redaction</strong> 保護<strong>「應用顯示層」</strong>（SQL 查詢結果動態打碼，防終端用戶偷看）。<br/>
+          • <strong>TDE (Transparent Data Encryption 透明數據加密)</strong> 保護<strong>「物理存儲層」</strong>（Disk 磁盤、Backups 備份、Exports 導出文件、Off-Site 異地存儲全部加密，防硬盤或備份被盜）。
+        </div>
+      </div>
+
+      <!-- 訪問控制與 VPD -->
+      <div class="grid-2">
+        <div class="card">
+          <h3><span>👤 數據庫訪問控制原則与 Named Users</span><span class="slide-ref">Pages 20–22</span></h3>
+          <ul class="clean-list">
+            <li><strong>Named Users (實名獨立賬戶)</strong>：嚴禁管理員為了方便共用賬戶或直接使用 <code>SYSTEM</code>！共用賬戶會徹底喪失 <strong>Accountability (可追責性)</strong>。每個 DBA 必須有獨立實名賬戶。</li>
+            <li><strong>Separation of Duties (SoD 職責分離)</strong> & <strong>Principle of Least Privilege (最小權限原則)</strong>。</li>
+            <li><strong>Granularity of Access Rights (訪問粒度 - Page 22)</strong>：權限粒度可控制在整個 DB $\rightarrow$ 單張 Table $\rightarrow$ 特定 <strong>Rows (行)</strong> 或 <strong>Columns (列)</strong>（例如：Nancy 只能看自己的記錄和下屬的記錄）。</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h3><span>🎯 Virtual Private Database (VPD 虛擬專用數據庫)</span><span class="slide-ref">Page 23 (高頻考點)</span></h3>
+          <p style="font-size:0.88rem; color:var(--text-secondary);">支持在<strong>行級 (Row-Level Security, RLS)</strong> 與<strong>列級 (Column)</strong> 實現細粒度訪問控制 (FGAC)。</p>
+          <div class="sql-block">
+            <span class="sql-comment">-- 用戶原本發出的查詢：</span><br/>
+            SELECT * FROM employees;<br/><br/>
+            <span class="sql-comment">-- VPD 策略在底層自動動態拼接 WHERE 子句 (Adds a dynamic WHERE clause)：</span><br/>
+            SELECT * FROM employees <strong style="color:#dc2626;">WHERE account_mgr_id = 148;</strong>
+          </div>
+          <p style="font-size:0.85rem; color:var(--text-secondary); margin-top:8px;">
+            🔑 <strong>權限要求</strong>：用戶必須被授予 <code>DBMS_RLS</code> PL/SQL 包的 <strong><code>EXECUTE</code></strong> 權限，才能創建 Oracle VPD 策略。
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 3: DETECT -->
+    <div class="section-block" data-section="detect">
+      <div class="section-header">
+        <span class="pillar-tag tag-detect">Pillar 3: Detect</span>
+        <h2>數據庫審計、AVDF 防火牆與終端用戶追蹤 (Pages 24–28)</h2>
+      </div>
+
+      <div class="grid-2" style="margin-bottom: 20px;">
+        <div class="card">
+          <h3><span>📋 合規要求與審計設計 4 要素</span><span class="slide-ref">Pages 24–25</span></h3>
+          <p style="font-size:0.88rem; color:var(--text-secondary);">持續監控個人數據活動，以便在發生洩露時及時通知監管機構，滿足 <strong>EU GDPR, PCI DSS, SOX (COBIT), HIPAA</strong> 合規要求。</p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>設計階段</th>
+                  <th>核心問題 (Auditing Requirements & Design)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>1. Capture</strong></td><td>必須捕獲哪些活動或事件？（如登錄 E1-E3、改權限 E9-E10、對象增刪改 E13）</td></tr>
+                <tr><td><strong>2. Retention</strong></td><td>審計日誌 (Audit trail) 如何存儲、防篡改保護與歸檔？</td></tr>
+                <tr><td><strong>3. Alert</strong></td><td>哪些代表入侵或違規的事件需要實時生成告警 (Real-time alerts)？</td></tr>
+                <tr><td><strong>4. Report</strong></td><td>報告發給誰？頻率如何？審閱者是否有資質？（控制有效性）</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3><span>💻 Oracle DB 審計實操 SQL 命令</span><span class="slide-ref">Page 26 (必背語法)</span></h3>
+          <p style="font-size:0.88rem; color:var(--text-secondary);">使用 <code>AUDIT</code> 語句開啟審計，可指定 <code>WHENEVER SUCCESSFUL</code> 或 <code>WHENEVER NOT SUCCESSFUL</code>：</p>
+          <div class="sql-block">
+            <span class="sql-comment">-- 1. 僅在成功創建用戶時記錄審計</span><br/>
+            SQL&gt; <strong>AUDIT CREATE USER WHENEVER SUCCESSFUL;</strong><br/><br/>
+            <span class="sql-comment">-- 2. 無論成功或失敗，只要刪表就記錄</span><br/>
+            SQL&gt; <strong>AUDIT DELETE TABLE;</strong><br/><br/>
+            <span class="sql-comment">-- 3. 僅在登錄失敗時記錄（用於檢測密碼暴力破解！）</span><br/>
+            SQL&gt; <strong>AUDIT CREATE SESSION WHENEVER NOT SUCCESSFUL;</strong><br/><br/>
+            <span class="sql-comment">-- 4. 查詢審計日誌視圖（按時間倒序）</span><br/>
+            SQL&gt; <strong>SELECT * FROM dba_audit_trail ORDER BY timestamp DESC;</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <h3><span>🏰 Oracle Audit Vault and Database Firewall (AVDF)</span><span class="slide-ref">Page 27</span></h3>
+          <ul class="clean-list">
+            <li><strong>集中存儲與防內鬼篡改</strong>：將各個數據庫與操作系統的審計數據轉發到<strong>遠程集中位置 (remote centralized location)</strong>，防止被審計的特權管理員自己偷偷修改或刪除日誌 (secure from tampering)！</li>
+            <li><strong>Database Firewall (數據庫防火牆)</strong>：在網絡層實時監控 SQL 流量（放行綠色 ✓、告警黃色 !、攔截紅色 ✕）。</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h3><span>🕵️ Application End User Tracking (終端用戶追蹤)</span><span class="slide-ref">Page 28</span></h3>
+          <p style="font-size:0.88rem; color:var(--text-secondary);"><strong>解決痛點</strong>：Web 前端用戶（如 <code>bob</code>）登錄應用後，應用服務器統一用公共數據庫賬號（如 <code>APPS</code>）連接 DB。若不追蹤，日誌裡 <code>DB User</code> 全是 <code>APPS</code>，查不出是誰查了信用卡表。</p>
+          <div class="flow-diagram">
+            <div class="flow-node">
+              <div class="title">1. End User</div>
+              <div class="sub"><code>bob</code> 登錄 Web App</div>
+            </div>
+            <div class="flow-arrow">➔</div>
+            <div class="flow-node">
+              <div class="title">2. App Server</div>
+              <div class="sub">用 <code>APPS</code> 賬號連 DB</div>
+            </div>
+            <div class="flow-arrow">➔</div>
+            <div class="flow-node" style="border-color:var(--danger-text); background:var(--danger-bg);">
+              <div class="title" style="color:var(--danger-text);">Client Identifier = bob</div>
+              <div class="sub">審計表精準關聯 bob 與 SQL</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    function filterSection(sectionName, btnElement) {
+      // 更新按鈕狀態
+      const buttons = document.querySelectorAll('.nav-btn');
+      buttons.forEach(btn => btn.classList.remove('active'));
+      btnElement.classList.add('active');
+
+      // 顯示/隱藏對應區塊
+      const blocks = document.querySelectorAll('.section-block');
+      blocks.forEach(block => {
+        if (sectionName === 'all' || block.getAttribute('data-section') === sectionName) {
+          block.style.display = 'block';
+        } else {
+          block.style.display = 'none';
+        }
+      });
+    }
+
+    function filterRules() {
+      const input = document.getElementById('ruleSearch').value.toUpperCase();
+      const table = document.getElementById('dbsatTable');
+      const tr = table.getElementsByTagName('tr');
+
+      for (let i = 1; i < tr.length; i++) {
+        const rowText = tr[i].textContent || tr[i].innerText;
+        if (rowText.toUpperCase().indexOf(input) > -1) {
+          tr[i].style.display = '';
+        } else {
+          tr[i].style.display = 'none';
+        }
+      }
+    }
+  </script>
+</body>
+</html>
